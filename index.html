@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AquaGuard · Démo application mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF4F8;--cd:#fff;--tx:#071C33;--mu:#5A6F85;--ln:#D5E1EA;--ok:#0FA97A;--bd:#E8501F;--ac:#0AA8A3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#071C33;--cd:#0F2C4C;--tx:#fff;--mu:#A9BCCF;--ln:#1D4468;--ok:#3ED598;--bd:#FF6A3D;--ac:#16C7C1}}
+:root[data-theme="dark"]{--bg:#071C33;--cd:#0F2C4C;--tx:#fff;--mu:#A9BCCF;--ln:#1D4468;--ok:#3ED598;--bd:#FF6A3D;--ac:#16C7C1}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font-family:"Open Sans",system-ui,sans-serif;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;height:100%;max-height:920px;margin:auto;display:flex;flex-direction:column;position:relative;overflow:hidden;background:var(--bg)}
+.h{font-family:"League Spartan",system-ui,sans-serif;font-weight:700}.mu{color:var(--mu);font-size:13px}p{margin:6px 0}
+header{padding:14px 20px 4px}main{flex:1;overflow:auto;padding:8px 20px 16px}
+select{width:100%;margin-top:6px;padding:10px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--cd);color:var(--tx);font:600 14px "Open Sans",sans-serif}
+section{display:none}section.on{display:block}
+.card{background:var(--cd);border:1px solid var(--ln);border-radius:18px;padding:16px;margin-bottom:12px}
+.st{display:flex;gap:14px;align-items:center}
+.ic{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font:700 28px "League Spartan",sans-serif;color:#071C33;flex:none}
+.pulse{animation:p 1.2s infinite}@keyframes p{0%{box-shadow:0 0 0 0 rgba(255,106,61,.6)}100%{box-shadow:0 0 0 18px rgba(255,106,61,0)}}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:14px;background:var(--cd);border:1px solid var(--ln);margin-bottom:8px;font-size:15px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:10px}
+button{font:600 15px "Open Sans",sans-serif;border-radius:14px;padding:14px;border:1.5px solid var(--ln);background:var(--cd);color:var(--tx);width:100%;margin-top:8px;cursor:pointer}
+button.p{background:var(--bd);border-color:var(--bd);color:#071C33}button.s{width:auto;margin:0;padding:8px 14px;font-size:13px}
+nav{display:flex;border-top:1px solid var(--ln);background:var(--cd);padding-bottom:8px}
+nav button{border:0;background:none;margin:0;border-radius:0;color:var(--mu);font-size:12px;padding:12px 2px}nav button.on{color:var(--ac)}
+#toast{position:absolute;left:12px;right:12px;top:-140px;transition:top .4s;background:var(--cd);border:1.5px solid var(--bd);border-radius:16px;padding:12px 14px;z-index:9;box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:pointer;font-size:14px}
+#toast.show{top:calc(env(safe-area-inset-top,0px) + 10px)}
+.bars{display:flex;align-items:flex-end;gap:8px;height:130px}.bars div{flex:1;background:var(--ac);border-radius:8px 8px 0 0;cursor:pointer}
+.days{height:auto;margin-top:6px}.days span{flex:1;text-align:center;font-size:12px;color:var(--mu)}
+.stp{display:flex;gap:6px;margin:10px 0}.stp span{flex:1;text-align:center;font-size:11px;padding:6px 2px;border-radius:8px;background:var(--bg);color:var(--mu)}.stp span.on{background:var(--ok);color:#071C33;font-weight:600}
+.lg{font-size:13px;padding:8px 0;border-bottom:1px solid var(--ln);display:flex;gap:10px}.lg b{color:var(--mu);font-weight:600;flex:none}
+input[type=range]{width:100%;accent-color:var(--ac)}
+</style></head><body>
+<div class="app"><div id="toast" onclick="go('al')"></div>
+<header><div class="h" style="font-size:22px">💧 AquaGuard</div><select id="sel" onchange="cur=+this.value;render()"></select></header>
+<main><section id="home" class="on"></section><section id="al"></section><section id="va"></section><section id="hi"></section></main>
+<nav id="nv"></nav></div>
+<script>
+const $=i=>document.getElementById(i),pad=n=>String(n).padStart(2,"0"),rnd=v=>Math.round(v*(1+(Math.random()-.5)*.08)),M=[.95,1.02,.9,1.1,1,1.15,1.05],D=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+const BL=[["Résidence Les Jardins · Casablanca",[["Colonne A",16],["Colonne B",18],["Jardin & parking",8]]],["Hôtel Atlas · Settat",[["Aile Nord",34],["Aile Sud",31],["Spa & piscine",22]]],["Immeuble Al Amal · Casablanca",[["Bloc 1",11],["Bloc 2",12],["Parking",4]]]].map(([n,z])=>({n,z,s:"ok",det:0,v:[1,1,1],lost:0,eta:-1,sent:0,log:[],f:z.map(x=>x[1]),tot:0,h:Array(30).fill(z.reduce((a,x)=>a+x[1],0))}));
+let cur=0,TH=40,tab="home";
+const base=b=>b.z.reduce((a,x)=>a+x[1],0),nm=b=>b.n.split(" · ")[0],st=b=>b.s=="leak"&&b.det?"leak":b.s=="iso"?"iso":"ok";
+const now=()=>{const d=new Date();return pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds())};
+const add=(b,m)=>{b.log.unshift([now(),m]);b.log=b.log.slice(0,12)};
+function notify(b){$("toast").innerHTML="<b>💧 AquaGuard · maintenant</b><br>Fuite détectée · "+nm(b)+". Appuyez pour agir.";$("toast").classList.add("show");try{navigator.vibrate&&navigator.vibrate(200)}catch(e){}setTimeout(()=>$("toast").classList.remove("show"),6000)}
+function tick(){let rr=0;BL.forEach(b=>{
+ b.f=b.z.map((z,i)=>b.v[i]?rnd(z[1]*(b.s=="leak"&&i==1?3.1:1)):0);b.tot=b.f.reduce((a,x)=>a+x,0);b.h.push(b.tot);b.h.shift();
+ if(b.s=="leak"&&!b.det&&(b.tot/base(b)-1)*100>TH){b.det=1;add(b,"Fuite détectée · "+b.z[1][0]);notify(b);rr=1}
+ if(b.s=="leak"&&b.det&&b.v[1])b.lost+=Math.max(0,b.f[1]-b.z[1][1])/60*30;
+ if(b.sent&&b.eta>0){b.eta--;if(!b.eta){add(b,"Technicien sur place");rr=1}}});
+ rr?render():paint()}
+function paint(){const b=BL[cur],L=st(b)=="leak";
+ const r=(n,v,c,off)=>`<div class="row"><span><i class="dot" style="background:${c}"></i>${n}</span><b style="color:${c=="var(--bd)"?c:"inherit"}">${off?"fermée":v+" l/min"}</b></div>`;
+ $("zs").innerHTML=r("Entrée générale",b.tot,L?"var(--bd)":"var(--ok)")+b.z.map((z,i)=>r(z[0],b.f[i],!b.v[i]?"var(--mu)":L&&i==1?"var(--bd)":"var(--ok)",!b.v[i])).join("");
+ const m=Math.max(120,...b.h)*1.1;$("sp").innerHTML=`<polyline fill="none" stroke="${L?"var(--bd)":"var(--ac)"}" stroke-width="3" stroke-linejoin="round" points="${b.h.map((v,i)=>(i*300/29).toFixed(1)+","+(66-v/m*62).toFixed(1)).join(" ")}"/>`;
+ BL.forEach((x,k)=>{if($("ls"+k))$("ls"+k).textContent=Math.round(x.lost)+" L · "+(x.lost*.012).toFixed(2).replace(".",",")+" DH";if($("et"+k))$("et"+k).textContent=pad(Math.floor(x.eta/60))+":"+pad(x.eta%60)})}
+function card(x,k){const S=st(x);return `<div class="card" style="border-color:var(--bd)"><div class="h" style="font-size:19px;color:var(--bd)">${S=="leak"?"Fuite détectée":"Fuite isolée"}</div><p><b>${nm(x)}</b> · ${x.z[1][0]}</p><p class="mu">Débit ${x.f[1]} l/min (normal : ${x.z[1][1]})<br>Pertes estimées : <b id="ls${k}"></b></p>
+<div class="stp"><span class="on">1 Détectée</span><span class="${x.v[1]?"":"on"}">2 Vanne fermée</span><span class="${x.sent?"on":""}">3 Technicien</span></div>
+${x.v[1]?`<button class="p" onclick="vlv(${k},1)">Fermer la vanne · ${x.z[1][0]}</button>`:`<p class="mu">✓ Vanne fermée à distance</p>`}
+${x.sent?`<p>🛠️ ${x.eta>0?`Technicien en route · arrivée dans <b id="et${k}"></b>`:"Technicien sur place"}</p>`:`<button onclick="snd(${k})">Envoyer un technicien</button>`}
+${x.sent&&x.eta==0?`<button class="p" onclick="rep(${k})">Marquer comme réparé</button>`:""}</div>`}
+function render(){const b=BL[cur],S=st(b),L=S=="leak",I=S=="iso",n=BL.filter(x=>x.s!="ok").length;
+ $("sel").innerHTML=BL.map((x,i)=>`<option value="${i}"${i==cur?" selected":""}>${st(x)=="ok"?"":"⚠ "}${x.n}</option>`).join("");
+ $("home").innerHTML=`<div class="card st"><div class="ic ${L?"pulse":""}" style="background:${L?"var(--bd)":I?"var(--ac)":"var(--ok)"}">${L?"!":"✓"}</div><div><div class="h" style="font-size:20px">${L?"Fuite détectée":I?b.z[1][0]+" isolée":"Tout est normal"}</div><div class="mu">${L?b.z[1][0]+" · débit anormal":I?"Vanne fermée · intervention en cours":"3 zones surveillées"}</div></div></div><div id="zs"></div><div class="card"><div class="mu">Débit entrée générale · 30 dernières secondes</div><svg id="sp" viewBox="0 0 300 70" style="width:100%;height:70px"></svg></div>${b.s=="ok"?`<button onclick="leakNow()">⚡ Simuler une fuite (démo)</button>`:""}`;
+ $("al").innerHTML=BL.map((x,k)=>st(x)=="ok"?"":card(x,k)).join("")||`<div class="card"><b>Aucune alerte active</b><p class="mu">Tous les capteurs de vos 3 sites répondent normalement.</p></div>`;
+ $("va").innerHTML=`<div class="card"><div class="h" style="font-size:18px">Vannes · ${nm(b)}</div><p class="mu">Commande à distance de chaque zone</p>${b.z.map((z,i)=>`<div class="row"><span>${z[0]}</span><button class="s ${b.v[i]?"":"p"}" onclick="vlv(${cur},${i})">${b.v[i]?"Ouverte · fermer":"Fermée · ouvrir"}</button></div>`).join("")}</div><div class="card"><div class="h" style="font-size:18px">Sensibilité</div><p class="mu">Alerte si le débit dépasse la normale de +<b id="thl">${TH}</b> %</p><input type="range" min="20" max="150" step="10" value="${TH}" oninput="TH=+this.value;$('thl').textContent=TH"><p class="mu">Plus le seuil est bas, plus la détection est rapide.</p></div>`;
+ $("hi").innerHTML=`<div class="card"><div class="h" style="font-size:18px">Consommation · 7 jours</div><p class="mu" id="bv">Touchez un jour · données de démonstration</p><div class="bars">${M.map((m,i)=>`<div onclick="bar(${i})" style="height:${m*70}%"></div>`).join("")}</div><div class="bars days">${D.map(d=>`<span>${d}</span>`).join("")}</div></div><div class="card"><div class="h" style="font-size:18px">Journal · ${nm(b)}</div>${b.log.map(l=>`<div class="lg"><b>${l[0]}</b><span>${l[1]}</span></div>`).join("")||`<p class="mu">Aucun événement.</p>`}</div><button onclick="reset()">Réinitialiser la démo</button><p class="mu">Simulation accélérée ×30 · tarif estimé 12 DH/m³.</p>`;
+ $("nv").innerHTML=[["home","🏠","Accueil"],["al","🔔","Alertes"+(n?" ("+n+")":"")],["va","🚰","Vannes"],["hi","📊","Historique"]].map(t=>`<button class="${t[0]==tab?"on":""}" onclick="go('${t[0]}')">${t[1]}<br>${t[2]}</button>`).join("");
+ document.querySelectorAll("section").forEach(e=>e.classList.toggle("on",e.id==tab));paint()}
+function go(t){tab=t;$("toast").classList.remove("show");render()}
+function leakNow(){BL[cur].s="leak";tick();render()}
+function vlv(k,i){const b=BL[k];b.v[i]=b.v[i]?0:1;add(b,(b.v[i]?"Vanne ouverte":"Vanne fermée")+" · "+b.z[i][0]);if(i==1){if(!b.v[1]&&b.s=="leak")b.s="iso";else if(b.v[1]&&b.s=="iso")b.s="leak"}render()}
+function snd(k){const b=BL[k];b.sent=1;b.eta=90;add(b,"Technicien envoyé · arrivée ~90 s (démo)");render()}
+function rep(k){const b=BL[k];b.s="ok";b.det=0;b.sent=0;b.eta=-1;b.v[1]=1;add(b,"Réparation terminée · réseau normal");render()}
+function bar(i){$("bv").textContent=D[i]+" · "+(base(BL[cur])*1.44*M[i]).toFixed(1).replace(".",",")+" m³"}
+function reset(){BL.forEach(b=>{b.s="ok";b.det=0;b.v=[1,1,1];b.lost=0;b.eta=-1;b.sent=0;b.log=[]});tab="home";render()}
+render();tick();setInterval(tick,1000);
+</script></body></html>
